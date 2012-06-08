@@ -1,6 +1,11 @@
 
 # WGETRC := ./.wgetrc 
 
+DIR = HadGEM2-ES IPSL-CM5A-LR
+SOURCE = $(foreach dir,$(DIR),$(subst source,$(dir),"bridled:/scratch/local/nbest/isi-mip-input/source"))
+ZIP = $(shell find $(DIR) -type f -name '*.zip')
+NC  = $(patsubst %.zip,%.nc,$(ZIP))
+
 
 wget: urls.txt
 #	rm wget.log
@@ -11,20 +16,21 @@ wget: urls.txt
 urls.txt: urls.R
 	Rscript --vanilla urls.R > urls.txt
 
-DIR = HadGEM2-ES IPSL-CM5A-LR
-ZIP = $(shell find $(DIRS) -type f -name '*.zip')
-NC  = $(patsubst %.zip,%.nc,$(ZIP))
+rsync:
+	rsync -av --include="*.zip" $(SOURCE) .
 
 $(NC): %.nc: %.zip
 	unzip -n -d $(dir $@) $<
-	rm $<
+	cdo splityear $@ annual/$(firstword $(subst /, ,$@))/$(basename $(notdir $@))_
+#	rm $<
 
-unzip: wget $(NC)
+unzip: $(NC)
 
-$(ZIP): %.zip: %.nc
-	zip -mTo -b /tmp -d $(dir $@) $@ $<
 
-rezip: $(ZIP)
+# $(ZIP): %.zip: %.nc
+# 	zip -mTo -b /tmp -d $(dir $@) $@ $<
+
+# rezip: $(ZIP)
 
 # unzip:
 # 	find HadGEM2-ES IPSL-CM5A-LR -type f -not -name '*.nc' -execdir unzip -n '{}' \;
@@ -35,7 +41,7 @@ test:
 rmzip:
 	find HadGEM2-ES IPSL-CM5A-LR -regex '.*zip\(\?auth\)?$$' -execdir rm '{}' \;
 
-.PHONY: wget test unzip rmzip
+.PHONY: wget rsync test unzip rmzip
 
 
 
