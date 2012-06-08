@@ -3,3 +3,5 @@
 .RData
 .wgetrc
 .netrc
+*~
+wget.log
