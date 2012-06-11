@@ -1,3 +1,4 @@
+#!/usr/bin/make -k -j4 -l6
 
 # WGETRC := ./.wgetrc 
 
@@ -5,7 +6,7 @@ DIR = HadGEM2-ES IPSL-CM5A-LR
 SOURCE = $(foreach dir,$(DIR),$(subst source,$(dir),"bridled:/scratch/local/nbest/isi-mip-input/source"))
 ZIP = $(shell find $(DIR) -type f -name '*.zip')
 NC  = $(patsubst %.zip,%.nc,$(ZIP))
-
+ANNUAL = $(shell Rscript --vanilla annual.R)
 
 wget: urls.txt
 #	rm wget.log
@@ -19,6 +20,17 @@ urls.txt: urls.R
 rsync:
 	rsync -av --include="*.zip" $(SOURCE) .
 
+test:
+	find $(DIR) -type f -not -name '*.nc' -execdir unzip -t '{}' \;
+
+# rmzip:
+# 	find $(DIR) -regex '.*zip\(\?auth\)?$$' -execdir rm '{}' \;
+
+# $(ZIP): %.zip: %.nc
+# 	zip -mTo -b /tmp -d $(dir $@) $@ $<
+
+# rezip: $(ZIP)
+
 $(NC): %.nc: %.zip
 	unzip -n -d $(dir $@) $<
 	cdo splityear $@ annual/$(firstword $(subst /, ,$@))/$(basename $(notdir $@))_
@@ -26,22 +38,20 @@ $(NC): %.nc: %.zip
 
 unzip: $(NC)
 
+# $(ANNUAL):
+# 	cdo splityear ???
 
-# $(ZIP): %.zip: %.nc
-# 	zip -mTo -b /tmp -d $(dir $@) $@ $<
+# annual: unzip $(ANNUAL)
 
-# rezip: $(ZIP)
+# because the annual files are not targets Make is not yet
+# smart enough to skip the cdo splityear operation, which has
+# no flag to avoid overwrites
 
-# unzip:
-# 	find HadGEM2-ES IPSL-CM5A-LR -type f -not -name '*.nc' -execdir unzip -n '{}' \;
+wth_gen: # unzip
+	$(MAKE) --directory=$@ all
 
-test:
-	find HadGEM2-ES IPSL-CM5A-LR -type f -not -name '*.nc' -execdir unzip -t '{}' \;
 
-rmzip:
-	find HadGEM2-ES IPSL-CM5A-LR -regex '.*zip\(\?auth\)?$$' -execdir rm '{}' \;
-
-.PHONY: wget rsync test unzip rmzip
+.PHONY: wget rsync test unzip rmzip wth_gen
 
 
 
