@@ -1,6 +1,6 @@
 #!/usr/bin/make -k -j4 -l6
 
-# WGETRC := ./.wgetrc 
+export WGETRC := ./.wgetrc 
 
 DIR = HadGEM2-ES IPSL-CM5A-LR
 SOURCE = $(foreach dir,$(DIR),$(subst source,$(dir),"bridled:/scratch/local/nbest/isi-mip-input/source"))
@@ -33,7 +33,7 @@ test:
 
 $(NC): %.nc: %.zip
 	unzip -n -d $(dir $@) $<
-	cdo splityear $@ annual/$(firstword $(subst /, ,$@))/$(basename $(notdir $@))_
+	cdo splityear -sellonlatbox,-180,180,-60,67 $@ annual/$(firstword $(subst /, ,$@))/$(basename $(notdir $@))_
 #	rm $<
 
 unzip: $(NC)
