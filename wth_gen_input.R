@@ -11,6 +11,11 @@ annualFiles <-
                         full.names=TRUE,
                         recursive= TRUE),
             "^annual/([^/]+)/([^_]+)_.*?_([0-9]{4}).nc$")
+repeatFinal <-
+  annualFiles[ annualFiles[,4] == "2099",]
+repeatFinal[,4] <- "2100"
+annualFiles <-
+  rbind( annualFiles, repeatFinal)
 
 wthGenNames <-
   sprintf( "wth_gen_input/%s/%s/%s_%s.nc",
@@ -31,7 +36,8 @@ for( path in unique( dirname( wthGenNames))) {
 createLinks <- function( link, file) {
   oldWd <- setwd( dirname( link))
   linkTarget <- paste( "../../..", file, sep= "/")
-  if( Sys.readlink( basename( link)) != "")
+  tryLink <- Sys.readlink( basename( link))
+  if( !is.na( tryLink) && tryLink != "")
     file.remove( basename( link))
   file.symlink( linkTarget, basename( link))
   setwd( oldWd)
@@ -42,6 +48,3 @@ setwd("/scratch/local/isi-mip-input/")
 mapply( createLinks,
        wthGenNames,
        annualFiles[, 1])
-       
-
-  

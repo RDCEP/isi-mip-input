@@ -47,7 +47,11 @@ unzip: $(NC)
 # smart enough to skip the cdo splityear operation, which has
 # no flag to avoid overwrites
 
+clean:
+	find grid -mindepth 2 -maxdepth 2 -type d -exec rm -rf '{}' \;
+
 wth_gen: # unzip
+	Rscript --vanilla wth_gen_input.R
 	$(MAKE) --directory=$@ all
 
 
