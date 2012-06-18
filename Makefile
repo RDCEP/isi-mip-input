@@ -1,21 +1,22 @@
 #!/usr/bin/make -k -j4 -l6
 
-export WGETRC := ./.wgetrc 
+# WGETRC stopped working when urls.Makefile was implemented.
+# Must be something to do with make's environment.
+# By not settting this variable wget now looks for ~/.wgetrc
+
+# export WGETRC := $(CURDIR)/wgetrc 
 
 DIR = HadGEM2-ES IPSL-CM5A-LR
 SOURCE = $(foreach dir,$(DIR),$(subst source,$(dir),"bridled:/scratch/local/nbest/isi-mip-input/source"))
-ZIP = $(shell find $(DIR) -type f -name '*.zip')
 NC  = $(patsubst %.zip,%.nc,$(ZIP))
 ANNUAL = $(shell Rscript --vanilla annual.R)
 
-wget: urls.txt
-#	rm wget.log
-	xargs --verbose -P10 -r -n1 -a urls.txt \
-	  wget --no-verbose --append-output wget.log \
-	    -c -nc -nH --cut-dirs=3 -x
+urls.Makefile: urls.R
+	Rscript --vanilla urls.R > $@
 
-urls.txt: urls.R
-	Rscript --vanilla urls.R > urls.txt
+-include urls.Makefile
+
+wget: $(ZIP)
 
 rsync:
 	rsync -av --include="*.zip" $(SOURCE) .
@@ -48,12 +49,18 @@ unzip: $(NC)
 # no flag to avoid overwrites
 
 clean:
-	find grid -mindepth 2 -maxdepth 2 -type d -exec rm -rf '{}' \;
+	find wth -mindepth 2 -maxdepth 2 -type d -exec rm -rf '{}' \;
 
 wth_gen: # unzip
-	Rscript --vanilla wth_gen_input.R
+	# Rscript --vanilla wth_gen_input.R
 	$(MAKE) --directory=$@ all
 
+wth_grid.txt: # wth_gen
+	find wth/HadGEM2-ES -mindepth 2 -type d | cut -d/ -f4 | sort | head > wth_grid.txt
+
+scenarios:
+	# download the scenario data from somewhere
+	tar xzf rcp8p5_soy.tar.gz -C scenarios
 
 .PHONY: wget rsync test unzip rmzip wth_gen
 
