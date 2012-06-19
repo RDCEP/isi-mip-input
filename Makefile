@@ -6,38 +6,52 @@
 
 # export WGETRC := $(CURDIR)/wgetrc 
 
-DIR = HadGEM2-ES IPSL-CM5A-LR
-SOURCE = $(foreach dir,$(DIR),$(subst source,$(dir),"bridled:/scratch/local/nbest/isi-mip-input/source"))
-NC  = $(patsubst %.zip,%.nc,$(ZIP))
-ANNUAL = $(shell Rscript --vanilla annual.R)
+# export modelDir = HadGEM2-ES IPSL-CM5A-LR
+export modelDir = IPSL-CM5A-LR
 
 urls.Makefile: urls.R
 	Rscript --vanilla urls.R > $@
 
 -include urls.Makefile
 
-wget: $(ZIP)
+$(zipFiles):
+	wget --no-verbose --append-output wget.log -c -nc -nH --cut-dirs=3 -x \
+	  http://vre1.dkrz.de:8080/thredds/fileServer/isi_mipEnhanced/$@
 
-rsync:
-	rsync -av --include="*.zip" $(SOURCE) .
+wget: $(zipFiles)
+
+# SOURCE = $(foreach dir,$(modelDir),$(subst source,$(dir),"bridled:/scratch/local/nbest/isi-mip-input/source"))
+
+# rsync:
+# 	rsync -av --include="*.zip" $(SOURCE) .
 
 test:
-	find $(DIR) -type f -not -name '*.nc' -execdir unzip -t '{}' \;
+	find $(modelDir) -type f -not -name '*.nc' -execdir unzip -t '{}' \;
 
-# rmzip:
-# 	find $(DIR) -regex '.*zip\(\?auth\)?$$' -execdir rm '{}' \;
-
-# $(ZIP): %.zip: %.nc
-# 	zip -mTo -b /tmp -d $(dir $@) $@ $<
-
-# rezip: $(ZIP)
+NC = $(patsubst %.zip,%.nc,$(zipFiles))
 
 $(NC): %.nc: %.zip
 	unzip -n -d $(dir $@) $<
-	cdo splityear -sellonlatbox,-180,180,-60,67 $@ annual/$(firstword $(subst /, ,$@))/$(basename $(notdir $@))_
-#	rm $<
 
 unzip: $(NC)
+
+split.Makefile: split.R 
+	Rscript --vanilla split.R > $@
+
+-include split.Makefile
+
+split: $(annualNcFiles)
+
+
+# wth_gen_input/HadGEM2-ES/rcp8p5/solar/solar_1950.nc: HadGEM2-ES/historical/pr_v2/pr_bced_1960_1999_hadgem2-es_historical_1950.nc
+# 	cdo splityear -sellonlatbox,-180,180,-60,67 $< wth_gen_input/HadGEM2-ES/rcp8p5/solar/solar_
+
+# wth_gen_input/HadGEM2-ES/historical/precip/precip_1951.nc wth_gen_input/HadGEM2-ES/historical/precip/precip_1952.nc wth_gen_input/HadGEM2-ES/historical/precip/precip_1953.nc wth_gen_input/HadGEM2-ES/historical/precip/precip_1954.nc wth_gen_input/HadGEM2-ES/historical/precip/precip_1955.nc wth_gen_input/HadGEM2-ES/historical/precip/precip_1956.nc wth_gen_input/HadGEM2-ES/historical/precip/precip_1957.nc wth_gen_input/HadGEM2-ES/historical/precip/precip_1958.nc wth_gen_input/HadGEM2-ES/historical/precip/precip_1959.nc wth_gen_input/HadGEM2-ES/historical/precip/precip_1960.nc: HadGEM2-ES/historical/pr_v2/pr_bced_1960_1999_hadgem2-es_historical_1951-1960.nc
+# 	cdo splityear -sellonlatbox,-180,180,-60,67 $< wth_gen_input/HadGEM2-ES/historical/precip/precip_
+
+# IPSL-CM5A-LR/rcp8p5/tasmin_v1/tasmin_bced_1960_1999_ipsl-cm5a-lr_rcp8p5_2091-2099.zip
+
+# ANNUAL = $(shell Rscript --vanilla annual.R)
 
 # $(ANNUAL):
 # 	cdo splityear ???

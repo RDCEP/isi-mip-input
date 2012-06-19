@@ -4,7 +4,8 @@ library( stringr)
 
 http <- "http://vre1.dkrz.de:8080/thredds/fileServer/isi_mipEnhanced"
 ## model <- c( "HadGEM2-ES", "IPSL-CM5A-LR", "WATCH_Forcing_Data")
-model <- c( "HadGEM2-ES", "IPSL-CM5A-LR")
+## model <- c( "HadGEM2-ES", "IPSL-CM5A-LR")
+modelDir <- unlist( str_split( Sys.getenv( "modelDir"), " "))
 scenario <- "rcp8p5"
 var <- c( "tasmax_v1", "tasmin_v1", "pr_v2", "rsds_v1")
 
@@ -23,44 +24,38 @@ scenarioPeriods <-
 df <-
   rbind( 
     expand.grid(
-      model= model,
+      modelDir= modelDir,
       scenario= "historical",
       var= var,
       years= historicalPeriods),
     expand.grid(
-      model= model,
+      modelDir= modelDir,
       scenario= scenario,
       var= var,
       years= scenarioPeriods))
 
-df <- with( df, df[ order( model, scenario, var, years), ])
+df <- with( df, df[ order( modelDir, scenario, var, years), ])
 
 zipFiles <-
   with( df, sprintf( "%s/%s/%s/%s_bced_1960_1999_%s_%s_%s.zip",
-                    model, scenario, var,
+                    modelDir, scenario, var,
                     str_extract( var, "[^_]+"),
-                    tolower( model), scenario, years))
+                    tolower( modelDir), scenario, years))
 
-## zipUrls <-
-##   with( df, sprintf( "%s/%s/%s/%s/%s_bced_1960_1999_%s_%s_%s.zip",
-##                     http, model, scenario, var,
-##                     str_extract( var, "[^_]+"),
-##                     tolower( model), scenario, years))
-
-zipUrls <- paste( http, zipFiles, sep="/")
+## zipUrls <- paste( http, zipFiles, sep="/")
 
 ## zipUrlsForWget <- zipUrls[ !file.exists( ncFiles)]
 ## write( zipUrlsForWget, file= "")
 
-wget <- "wget --no-verbose --append-output wget.log -c -nc -nH --cut-dirs=3 -x"
+cat( "export zipFiles =", zipFiles, sep= " \\\n")
 
-cat( "ZIP =", zipFiles, "\n\n")
+## wget <- "wget --no-verbose --append-output wget.log -c -nc -nH --cut-dirs=3 -x"
 
-cat(
-  sprintf(
-    "%s:\n\t%s %s\n\n",
-    zipFiles, wget, zipUrls),
-  sep= "")
+## cat(
+##   sprintf(
+##     "%s:\n\t%s %s\n\n",
+##     zipFiles, wget, zipUrls),
+##   sep= "")
 
 ##write( zipUrls, file= "")
 
