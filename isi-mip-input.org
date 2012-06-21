@@ -1,0 +1,9 @@
+
+* DONE compute Makefile syntax for dependencies not covered by pattern rules
+  CLOSED: [2012-06-21 Thu 11:42]
+
+* TODO download MD5 checksums for .zip downloads
+
+* TODO make scenarios a Makefile environment variable
+
+* TODO compute Makefile rules that call nc_wth_gen
