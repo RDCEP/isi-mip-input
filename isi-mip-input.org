@@ -1,9 +1,20 @@
 
-* DONE compute Makefile syntax for dependencies not covered by pattern rules
-  CLOSED: [2012-06-21 Thu 11:42]
+* Tasks
 
-* TODO download MD5 checksums for .zip downloads
+** TODO download MD5 checksums for .zip downloads
 
-* TODO make scenarios a Makefile environment variable
+** TODO try writing nc_wth_gen output to local disk instead of GPFS
 
-* TODO compute Makefile rules that call nc_wth_gen
+** Archive							    :ARCHIVE:
+*** DONE compute Makefile syntax for dependencies not covered by pattern rules
+    :PROPERTIES:
+    :ARCHIVE_TIME: 2012-07-18 Wed 13:34
+    :END:
+*** DONE make scenarios a Makefile environment variable
+    :PROPERTIES:
+    :ARCHIVE_TIME: 2012-07-18 Wed 13:34
+    :END:
+*** DONE compute Makefile rules that call nc_wth_gen
+    :PROPERTIES:
+    :ARCHIVE_TIME: 2012-07-18 Wed 13:34
+    :END:

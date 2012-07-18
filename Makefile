@@ -7,80 +7,102 @@
 # export WGETRC := $(CURDIR)/wgetrc 
 
 # export modelDir = HadGEM2-ES IPSL-CM5A-LR
-export modelDir = IPSL-CM5A-LR
+export model = IPSL-CM5A-LR
+export scenario = rcp2p6 rcp4p5 rcp6p0 rcp8p5
 
-urls.Makefile: urls.R
-	Rscript --vanilla urls.R > $@
+vpath %.R scripts
 
--include urls.Makefile
+zipFiles.make: zipFiles.R
+	Rscript --vanilla $< > $@
 
-$(zipFiles):
-	wget --no-verbose --append-output wget.log -c -nc -nH --cut-dirs=3 -x \
-	  http://vre1.dkrz.de:8080/thredds/fileServer/isi_mipEnhanced/$@
+-include zipFiles.make
 
-wget: $(zipFiles)
+$(zipFiles): 
+# 	wget --no-verbose --append-output wget.log --no-clobber --no-host-directories --cut-dirs=3 \
+#           --force-directories --directory-prefix=nc \
+# 	  http://vre1.dkrz.de:8080/thredds/fileServer/isi_mipEnhanced/$@
 
-# SOURCE = $(foreach dir,$(modelDir),$(subst source,$(dir),"bridled:/scratch/local/nbest/isi-mip-input/source"))
-
-# rsync:
-# 	rsync -av --include="*.zip" $(SOURCE) .
+# wget: $(zipFiles)
 
 test:
 	find $(modelDir) -type f -not -name '*.nc' -execdir unzip -t '{}' \;
 
 NC = $(patsubst %.zip,%.nc,$(zipFiles))
 
-$(NC): %.nc: %.zip
+$(NC): %.nc: | %.zip
 	unzip -n -d $(dir $@) $<
 
 unzip: $(NC)
 
-split.Makefile: split.R 
-	Rscript --vanilla split.R > $@
+split.make: split.R 
+	Rscript --vanilla $< > $@
 
--include split.Makefile
+-include split.make
+
+# merge the historical files with the scenarios via symlinks
+# and repeat 2099 as 2100
+
+futureDirs = $(shell find nc/wth_gen_input/ -mindepth 3 -type d -not -regex ".*/historical/.*")
 
 split: $(annualNcFiles)
-# merge the hitorical files with the scenarios via symlinks
-	for dir in $(find wth_gen_input/IPSL-CM5A-LR -mindepth 2 -type d -not -regex ".*/historical/.*"); do cd $dir; var=$(echo $dir |cut -d/ -f4); ln -fs ../../historical/${var}/${var}_* .; cd -; done
-# repeat 2099 as 2100
-	for var in tmin tmax precip solar; do cd wth_gen_input/IPSL-CM5A-LR/rcp8p5/${var}; ln -vs ${var}_2099.nc ${var}_2100.nc; cd -; done
+	for dir in $(futureDirs); \
+        do \
+          pushd $$dir; \
+          var=$$(echo $$dir |cut -d/ -f5); \
+          ln -vs ../../historical/$${var}/$${var}_* .; \
+          ln -vs $${var}_2099.nc $${var}_2100.nc; \
+          popd; \
+        done
+
+#	for var in tmin tmax precip solar; do cd nc/wth_gen_input/IPSL-CM5A-LR/rcp8p5/$${var}; ln -vs $${var}_2099.nc $${var}_2100.nc; cd -; done
+
 
 clean:
 	find wth -mindepth 2 -maxdepth 2 -type d -exec rm -rf '{}' \;
 
-wth_gen: # unzip
+wth_gen:
 	$(MAKE) --directory=$@ nc_wth_gen
 
 export LD_LIBRARY_PATH := /autonfs/home/dmcinern/lib:$(LD_LIBRARY_PATH)
 
-wth/IPSL-CM5A-LR/rcp8p5/GENERIC1.LOG: wth_gen
-	mkdir -p $(dir $@)
-	wth_gen/nc_wth_gen 1950 1980 wth_gen_input/IPSL-CM5A-LR/rcp8p5/ $(dir $@) $(notdir $(basename $@)).WTH 1 1 > $@
+wth.make: wth.R 
+	Rscript --vanilla $< > $@
 
-wth/IPSL-CM5A-LR/rcp8p5/GENERIC2.LOG: wth_gen
-	mkdir -p $(dir $@)
-	wth_gen/nc_wth_gen 1980 2010 wth_gen_input/IPSL-CM5A-LR/rcp8p5/ $(dir $@) $(notdir $(basename $@)).WTH 1 1 > $@
+-include wth.make
 
-wth/IPSL-CM5A-LR/rcp8p5/GENERIC3.LOG: wth_gen
-	mkdir -p $(dir $@)
-	wth_gen/nc_wth_gen 2010 2040 wth_gen_input/IPSL-CM5A-LR/rcp8p5/ $(dir $@) $(notdir $(basename $@)).WTH 1 1 > $@
+$(wthDirs):
+	mkdir -p $@
 
-wth/IPSL-CM5A-LR/rcp8p5/GENERIC4.LOG: wth_gen
-	mkdir -p $(dir $@)
-	wth_gen/nc_wth_gen 2040 2070 wth_gen_input/IPSL-CM5A-LR/rcp8p5/ $(dir $@) $(notdir $(basename $@)).WTH 1 1 > $@
+wth: $(wthLogFiles)
 
-wth/IPSL-CM5A-LR/rcp8p5/GENERIC5.LOG: wth_gen
-	mkdir -p $(dir $@)
-	wth_gen/nc_wth_gen 2070 2100 wth_gen_input/IPSL-CM5A-LR/rcp8p5/ $(dir $@) $(notdir $(basename $@)).WTH 1 1 > $@
+# wth/IPSL-CM5A-LR/rcp8p5/GENERIC1.LOG: split wth_gen
+# 	mkdir -p $(dir $@)
+# 	wth_gen/nc_wth_gen 1950 1980 nc/wth_gen_input/IPSL-CM5A-LR/rcp8p5/ $(dir $@) $(notdir $(basename $@)).WTH 1 1 > $@
 
-wth: wth/IPSL-CM5A-LR/rcp8p5/GENERIC1.LOG wth/IPSL-CM5A-LR/rcp8p5/GENERIC2.LOG wth/IPSL-CM5A-LR/rcp8p5/GENERIC3.LOG wth/IPSL-CM5A-LR/rcp8p5/GENERIC4.LOG wth/IPSL-CM5A-LR/rcp8p5/GENERIC5.LOG
+# wth/IPSL-CM5A-LR/rcp8p5/GENERIC2.LOG: split wth_gen
+# 	mkdir -p $(dir $@)
+# 	wth_gen/nc_wth_gen 1980 2010 nc/wth_gen_input/IPSL-CM5A-LR/rcp8p5/ $(dir $@) $(notdir $(basename $@)).WTH 1 1 > $@
+
+# wth/IPSL-CM5A-LR/rcp8p5/GENERIC3.LOG: split wth_gen
+# 	mkdir -p $(dir $@)
+# 	wth_gen/nc_wth_gen 2010 2040 nc/wth_gen_input/IPSL-CM5A-LR/rcp8p5/ $(dir $@) $(notdir $(basename $@)).WTH 1 1 > $@
+
+# wth/IPSL-CM5A-LR/rcp8p5/GENERIC4.LOG: split wth_gen
+# 	mkdir -p $(dir $@)
+# 	wth_gen/nc_wth_gen 2040 2070 nc/wth_gen_input/IPSL-CM5A-LR/rcp8p5/ $(dir $@) $(notdir $(basename $@)).WTH 1 1 > $@
+
+# wth/IPSL-CM5A-LR/rcp8p5/GENERIC5.LOG: split wth_gen
+# 	mkdir -p $(dir $@)
+# 	wth_gen/nc_wth_gen 2070 2100 nc/wth_gen_input/IPSL-CM5A-LR/rcp8p5/ $(dir $@) $(notdir $(basename $@)).WTH 1 1 > $@
+
+# wth: wth/IPSL-CM5A-LR/rcp8p5/GENERIC1.LOG wth/IPSL-CM5A-LR/rcp8p5/GENERIC2.LOG wth/IPSL-CM5A-LR/rcp8p5/GENERIC3.LOG wth/IPSL-CM5A-LR/rcp8p5/GENERIC4.LOG wth/IPSL-CM5A-LR/rcp8p5/GENERIC5.LOG
+
 
 wth_grid.txt: # wth_gen
 	find wth/HadGEM2-ES -mindepth 2 -type d | cut -d/ -f4 | sort | head > wth_grid.txt
 
 scenarios:
-	# download the scenario data from somewhere
+# download the scenario data from somewhere
 	tar xzf rcp8p5_soy.tar.gz -C scenarios
 
 .PHONY: wget rsync test unzip rmzip split wth_gen wth
