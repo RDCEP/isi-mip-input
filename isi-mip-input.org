@@ -5,6 +5,8 @@
 
 ** TODO try writing nc_wth_gen output to local disk instead of GPFS
 
+** TODO consider emptying scratchDir before running nc_wth_gen and/or smarter rsync command
+
 ** Archive							    :ARCHIVE:
 *** DONE compute Makefile syntax for dependencies not covered by pattern rules
     :PROPERTIES:

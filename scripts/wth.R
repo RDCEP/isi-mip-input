@@ -1,8 +1,9 @@
 
 library( stringr)
 
-model    <- unlist( str_split( Sys.getenv( "model"), " "))
-scenario <- unlist( str_split( Sys.getenv( "scenario"), " "))
+     model <- unlist( str_split( Sys.getenv(      "model"), " "))
+  scenario <- unlist( str_split( Sys.getenv(   "scenario"), " "))
+scratchDir <- unlist( str_split( Sys.getenv( "scratchDir"), " "))
 
 ## model <-
 ##   "IPSL-CM5A-LR"
@@ -28,8 +29,8 @@ df <-
 
 wthLogFile <- function( model, scenario, period) {
   sprintf(
-    "wth/%s/%s/GENERIC%d.LOG",
-    model, scenario, period)
+    "%s/%s/%s/GENERIC%d.LOG",
+    scratchDir, model, scenario, period)
 }
 
 wthMakeRule <- function( model, scenario, period) {
@@ -38,17 +39,18 @@ wthMakeRule <- function( model, scenario, period) {
     sprintf(
       "%s: split wth_gen | %s",
       log, dirname( log)),
-    ## "\tmkdir -p $(dir $@)",
+    "@echo started $@ at $$(date)",
     sprintf(
-      "\twth_gen/nc_wth_gen %s nc/wth_gen_input/%s/%s/ %s GENERIC%d.WTH 1 1 > $@",
+      "wth_gen/nc_wth_gen %s nc/wth_gen_input/%s/%s/ %s GENERIC%d.WTH 1 1 > $@",
       periodYears[ period], model, scenario, dirname( log), period),
-    sep= "\n")
+    "@echo completed $@ at $$(date)",    
+    sep= "\n\t")
 }
 
 cat(
   "wthDirs = ",
   paste(
-    "wth",
+    scratchDir,
     apply(
       unique( df[, c("model", "scenario")]),
       1,
