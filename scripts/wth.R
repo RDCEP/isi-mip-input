@@ -4,6 +4,8 @@ library( stringr)
      model <- unlist( str_split( Sys.getenv(      "model"), " "))
   scenario <- unlist( str_split( Sys.getenv(   "scenario"), " "))
 scratchDir <- unlist( str_split( Sys.getenv( "scratchDir"), " "))
+ wthChunks <- unlist( str_split( Sys.getenv(  "wthChunks"), " "))
+  qsubArgs <- unlist( Sys.getenv( "qsubArgs"))
 
 ## model <-
 ##   "IPSL-CM5A-LR"
@@ -25,25 +27,34 @@ df <-
   expand.grid(
     model= model,
     scenario= scenario,
-    period= 1:5)
+    period= 1:5,
+    chunk= 1:wthChunks)
 
-wthLogFile <- function( model, scenario, period) {
-  sprintf(
-    "%s/%s/%s/GENERIC%d.LOG",
-    scratchDir, model, scenario, period)
-}
+wthLogFile <-
+  function( model, scenario, period, chunk,
+           out= TRUE) {
+    sprintf(
+      "%s/%s/%s/nc_wth_gen.%s.%s.%s.%s",
+      scratchDir, model, scenario,
+      if( out) "out" else "err",
+      period, wthChunks, chunk)
+  }
 
-wthMakeRule <- function( model, scenario, period) {
-  log <- wthLogFile( model, scenario, period)
+wthMakeRule <-
+  function( model, scenario, period, chunk) {
+  stdOut <- wthLogFile( model, scenario, period, chunk)
+  stdErr <- wthLogFile( model, scenario, period, chunk, out= FALSE)
   paste(
     sprintf(
       "%s: split wth_gen | %s",
-      log, dirname( log)),
-    "@echo started $@ at $$(date)",
+      stdOut, dirname( stdOut)),
+##    "@echo started $@ at $$(date)",
     sprintf(
-      "wth_gen/nc_wth_gen %s nc/wth_gen_input/%s/%s/ %s GENERIC%d.WTH 1 1 > $@",
-      periodYears[ period], model, scenario, dirname( log), period),
-    "@echo completed $@ at $$(date)",    
+      "echo wth_gen/nc_wth_gen %s nc/wth_gen_input/%s/%s %s GENERIC%s.WTH %s %s | qsub %s -d %s -o %s -e %s",
+      periodYears[ period], model, scenario,
+      dirname( stdOut), period, wthChunks, chunk,
+      qsubArgs, getwd(), stdOut, stdErr),
+##    "@echo completed $@ at $$(date)",    
     sep= "\n\t")
 }
 
@@ -66,7 +77,8 @@ cat(
       wthLogFile,
       model,
       scenario,
-      period)),
+      period,
+      chunk)),
   sep= " \\\n")
 
 cat(
@@ -77,6 +89,7 @@ cat(
       wthMakeRule,
       model,
       scenario,
-      period)),
+      period,
+      chunk)),
   sep= "\n\n")
 

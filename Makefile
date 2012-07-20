@@ -9,8 +9,10 @@
 # export modelDir = HadGEM2-ES IPSL-CM5A-LR
 export model = IPSL-CM5A-LR
 # export scenario = rcp2p6 rcp4p5 rcp6p0 rcp8p5
-export scenario = rcp2p6 rcp4p5 rcp6p0
-export scratchDir = /scratch/local/wth
+export scenario = rcp4p5 rcp6p0
+export scratchDir = wth
+export wthChunks = 100
+export qsubArgs = -N nc_wth_gen -l walltime=01:00:00
 
 vpath %.R scripts
 
@@ -54,11 +56,11 @@ futureDirs = $(shell find nc/wth_gen_input/ -mindepth 3 -type d -not -regex ".*/
 split: $(annualNcFiles)
 	for dir in $(futureDirs); \
         do \
-          pushd $$dir; \
-          var=$$(echo $$dir |cut -d/ -f5); \
-          ln -vs ../../historical/$${var}/$${var}_* . 2> /dev/null; \
-          ln -vs $${var}_2099.nc $${var}_2100.nc 2> /dev/null; \
-          popd; \
+          pushd $$dir && \
+          var=$$(echo $$dir |cut -d/ -f5) && \
+          ln -vs ../../historical/$${var}/$${var}_* . && \
+          ln -vs $${var}_2099.nc $${var}_2100.nc && \
+          popd 2&1> /dev/null; \
         done
 
 clean:
@@ -69,7 +71,7 @@ wth_gen:
 
 export LD_LIBRARY_PATH := /autonfs/home/dmcinern/lib:$(LD_LIBRARY_PATH)
 
-wth.make: wth.R 
+wth.make: wth.R Makefile
 	Rscript --vanilla $< > $@
 
 -include wth.make
@@ -77,8 +79,15 @@ wth.make: wth.R
 $(wthDirs):
 	mkdir -p $@
 
-wth: $(wthLogFiles)
-	rsync -a $(scratchDir) .
+missingLogFiles = \
+  $(filter-out \
+    $(foreach m, $(model), \
+      $(foreach s, $(scenario), \
+        $(wildcard wth/$(m)/$(s)/nc_wth_gen.out.*))), \
+    $(wthLogFiles))
+
+wth: $(missingLogFiles)
+#	rsync -a $(scratchDir) .
 
 wth_grid.txt: # wth_gen
 	find wth/HadGEM2-ES -mindepth 2 -type d | cut -d/ -f4 | sort | head > wth_grid.txt
