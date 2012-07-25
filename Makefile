@@ -9,10 +9,10 @@
 # export modelDir = HadGEM2-ES IPSL-CM5A-LR
 export model = IPSL-CM5A-LR
 # export scenario = rcp2p6 rcp4p5 rcp6p0 rcp8p5
-export scenario = rcp4p5 rcp6p0
+export scenario = rcp2p6 rcp4p5 rcp6p0
 export scratchDir = wth
 export wthChunks = 100
-export qsubArgs = -N nc_wth_gen -l walltime=01:00:00
+export qsubArgs = -N nc_wth_gen -l walltime=02:00:00
 
 vpath %.R scripts
 
