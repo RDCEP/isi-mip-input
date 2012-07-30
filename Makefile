@@ -7,16 +7,17 @@
 # export WGETRC := $(CURDIR)/wgetrc 
 
 # export modelDir = HadGEM2-ES IPSL-CM5A-LR
-export model = IPSL-CM5A-LR
+export model = HadGEM2-ES
 # export scenario = rcp2p6 rcp4p5 rcp6p0 rcp8p5
-export scenario = rcp2p6 rcp4p5 rcp6p0
+export scenario = rcp2p6 rcp4p5 rcp6p0 rcp8p5
 export scratchDir = wth
 export wthChunks = 100
 export qsubArgs = -N nc_wth_gen -l walltime=02:00:00
+export qsubArgsCdo = -N cdo -l walltime=00:30:00
 
 vpath %.R scripts
 
-zipFiles.make: zipFiles.R
+zipFiles.make: zipFiles.R Makefile
 	Rscript --vanilla $< > $@
 
 -include zipFiles.make
@@ -38,30 +39,30 @@ test:
 
 NC = $(patsubst %.zip,%.nc,$(zipFiles))
 
-$(NC): %.nc: | %.zip
+$(NC): %.nc: %.zip
 	unzip -n -d $(dir $@) $<
 
 unzip: $(NC)
 
-split.make: split.R 
+split.make: split.R Makefile
 	Rscript --vanilla $< > $@
 
 -include split.make
 
+$(annualDirs):
+	mkdir -p $@
+
 # merge the historical files with the scenarios via symlinks
 # and repeat 2099 as 2100
 
-futureDirs = $(shell find nc/wth_gen_input/ -mindepth 3 -type d -not -regex ".*/historical/.*")
+# export futureDirs = $(shell find nc/wth_gen_input/ -mindepth 3 -type d -not -regex ".*/historical/.*")
 
 split: $(annualNcFiles)
-	for dir in $(futureDirs); \
-        do \
-          pushd $$dir && \
-          var=$$(echo $$dir |cut -d/ -f5) && \
-          ln -vs ../../historical/$${var}/$${var}_* . && \
-          ln -vs $${var}_2099.nc $${var}_2100.nc && \
-          popd 2&1> /dev/null; \
-        done
+
+$(finalYearLinks): %_2100.nc: %_2099.nc
+	ln -vs $< $@
+
+links: split $(historicalLinks) $(finalYearLinks)
 
 clean:
 	find wth -mindepth 2 -maxdepth 2 -type d -exec rm -rf '{}' \;
@@ -97,7 +98,7 @@ scenarios:
 	cp -v ~jelliott/rcp8p5_*.tar.gz scenarios
 	find scenarios -name "*.tar.gz" -execdir tar xzf \{\} \;
 
-.PHONY: wget test unzip rmzip split wth_gen wth scenarios
+.PHONY: wget test unzip rmzip split links wth_gen wth scenarios
 
 
 

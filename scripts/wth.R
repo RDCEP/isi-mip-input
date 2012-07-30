@@ -36,8 +36,8 @@ wthLogFile <-
     sprintf(
       "%s/%s/%s/nc_wth_gen.%s.%s.%s.%s",
       scratchDir, model, scenario,
-      if( out) "out" else "err",
-      period, wthChunks, chunk)
+      period, wthChunks, chunk,
+      if( out) "out" else "err")
   }
 
 wthMakeRule <-
@@ -46,7 +46,7 @@ wthMakeRule <-
   stdErr <- wthLogFile( model, scenario, period, chunk, out= FALSE)
   paste(
     sprintf(
-      "%s: split wth_gen | %s",
+      "%s: wth_gen | %s",
       stdOut, dirname( stdOut)),
 ##    "@echo started $@ at $$(date)",
     sprintf(
