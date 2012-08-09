@@ -12,7 +12,7 @@ export model = HadGEM2-ES
 export scenario = rcp2p6 rcp4p5 rcp6p0 rcp8p5
 export scratchDir = wth
 export wthChunks = 100
-export qsubArgs = -N nc_wth_gen -l walltime=02:00:00
+export qsubArgs = -N nc_wth_gen -l walltime=08:00:00,mem=500mb
 export qsubArgsCdo = -N cdo -l walltime=00:30:00
 
 vpath %.R scripts
@@ -60,9 +60,11 @@ $(annualDirs):
 split: $(annualNcFiles)
 
 $(finalYearLinks): %_2100.nc: %_2099.nc
-	ln -vs $< $@
+	ln -vfs $(notdir $<) $@
 
-links: split $(historicalLinks) $(finalYearLinks)
+histLinks: $(historicalLinks) 
+
+finalLinks: $(finalYearLinks)
 
 clean:
 	find wth -mindepth 2 -maxdepth 2 -type d -exec rm -rf '{}' \;
@@ -80,11 +82,14 @@ wth.make: wth.R Makefile
 $(wthDirs):
 	mkdir -p $@
 
+pbs: pbs.R
+	Rscript --vanilla $<
+
 missingLogFiles = \
   $(filter-out \
     $(foreach m, $(model), \
       $(foreach s, $(scenario), \
-        $(wildcard wth/$(m)/$(s)/nc_wth_gen.out.*))), \
+        $(wildcard wth/$(m)/$(s)/nc_wth_gen.*.out))), \
     $(wthLogFiles))
 
 wth: $(missingLogFiles)
@@ -95,8 +100,11 @@ wth_grid.txt: # wth_gen
 
 scenarios:
 # download the scenario data from somewhere
-	cp -v ~jelliott/rcp8p5_*.tar.gz scenarios
-	find scenarios -name "*.tar.gz" -execdir tar xzf \{\} \;
+	# cp -v ~jelliott/rcp8p5_*.tar.gz scenarios
+	# find scenarios -name "*.tar.gz" -execdir tar xzf \{\} --no-same-permissions --overwrite c\;
+	# for crop in soy mai; do echo "tar xzf rcp8p5_${crop}.tar.gz --no-same-permissions --overwrite" | qsub -l walltime=12:00:00 -d $(pwd) -o rcp8p5_${crop}.out -e rcp8p5_${crop}.err; done
+	for crop in soy mai; do echo "tar xzvf rcp8p5_${crop}.tar.gz --overwrite" | qsub -l walltime=36:00:00 -d $(pwd) -o rcp8p5_${crop}.out -e rcp8p5_${crop}.err; done
+	echo 'find rcp8p5_mai rcp8p5_soy -type f -exec chmod -v u-x,g+rw,o+r \{\} \;' | qsub -l walltime=12:00:00 -d $(pwd)/scenarios
 
 .PHONY: wget test unzip rmzip split links wth_gen wth scenarios
 
