@@ -6,13 +6,12 @@
 
 # export WGETRC := $(CURDIR)/wgetrc 
 
-# export modelDir = HadGEM2-ES IPSL-CM5A-LR
-export model = HadGEM2-ES
-# export scenario = rcp2p6 rcp4p5 rcp6p0 rcp8p5
+# export model = HadGEM2-ES IPSL-CM5A-LR MIROC-ESM-CHEM GFDL-ESM2M NorESM1-M
+export model = NorESM1-M
 export scenario = rcp2p6 rcp4p5 rcp6p0 rcp8p5
 export scratchDir = wth
-export wthChunks = 100
-export qsubArgs = -N nc_wth_gen -l walltime=08:00:00,mem=500mb
+export wthChunks = 8
+export qsubArgs = -N nc_wth_gen -l walltime=4:00:00,mem=500mb
 export qsubArgsCdo = -N cdo -l walltime=00:30:00
 
 vpath %.R scripts
@@ -28,11 +27,13 @@ $(zipFiles):
 # Eventually we will attempt to automate this through the command-line interface.
 #
 # 
-# 	wget --no-verbose --append-output wget.log --no-clobber --no-host-directories --cut-dirs=3 \
-#           --force-directories --directory-prefix=nc \
-# 	  http://vre1.dkrz.de:8080/thredds/fileServer/isi_mipEnhanced/$@
+	mkdir -p $(dir $@)
+	wget --progress=dot:mega --output-file $(patsubst %.zip,%.log,$@) \
+--no-clobber --no-host-directories --cut-dirs=3 \
+--force-directories --directory-prefix=nc \
+http://vre1.dkrz.de:8080/thredds/fileServer/isi_mipEnhanced/$(patsubst nc/%,%,$@)
 
-# wget: $(zipFiles)
+wget: $(zipFiles)
 
 test:
 	find $(modelDir) -type f -not -name '*.nc' -execdir unzip -t '{}' \;
@@ -66,8 +67,12 @@ histLinks: $(historicalLinks)
 
 finalLinks: $(finalYearLinks)
 
+links: $(historicalLinks) $(finalYearLinks)
+
+
 clean:
 	find wth -mindepth 2 -maxdepth 2 -type d -exec rm -rf '{}' \;
+	rm wget.log
 
 wth_gen:
 	$(MAKE) --directory=$@ nc_wth_gen
@@ -92,7 +97,7 @@ missingLogFiles = \
         $(wildcard wth/$(m)/$(s)/nc_wth_gen.*.out))), \
     $(wthLogFiles))
 
-wth: $(missingLogFiles)
+wth: links $(missingLogFiles)
 #	rsync -a $(scratchDir) .
 
 wth_grid.txt: # wth_gen
@@ -106,7 +111,7 @@ scenarios:
 	for crop in soy mai; do echo "tar xzvf rcp8p5_${crop}.tar.gz --overwrite" | qsub -l walltime=36:00:00 -d $(pwd) -o rcp8p5_${crop}.out -e rcp8p5_${crop}.err; done
 	echo 'find rcp8p5_mai rcp8p5_soy -type f -exec chmod -v u-x,g+rw,o+r \{\} \;' | qsub -l walltime=12:00:00 -d $(pwd)/scenarios
 
-.PHONY: wget test unzip rmzip split links wth_gen wth scenarios
+.PHONY: wget test unzip rmzip split links wth_gen wth scenarios histLinks finalLinks links
 
 
 

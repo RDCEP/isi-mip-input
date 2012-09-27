@@ -1,0 +1,10 @@
+isimip#vre1/gpfs_750/projects/ISI_MIP/data/GFDL-ESM2M/ esg#anl-bdm/ISIMIP/data/GFDL-ESM2M/ -r
+isimip#vre1/gpfs_750/projects/ISI_MIP/data/HadGEM2-ES/ esg#anl-bdm/ISIMIP/data/HadGEM2-ES/ -r
+isimip#vre1/gpfs_750/projects/ISI_MIP/data/IPSL-CM5A-LR/ esg#anl-bdm/ISIMIP/data/IPSL-CM5A-LR/ -r
+isimip#vre1/gpfs_750/projects/ISI_MIP/data/MIROC-ESM-CHEM/ esg#anl-bdm/ISIMIP/data/MIROC-ESM-CHEM/ -r
+isimip#vre1/gpfs_750/projects/ISI_MIP/data/NorESM1-M/ esg#anl-bdm/ISIMIP/data/NorESM1-M/ -r
+isimip#vre1/gpfs_750/projects/ISI_MIP/data/RCP_CO2_Data/ esg#anl-bdm/ISIMIP/data/RCP_CO2_Data/ -r
+isimip#vre1/gpfs_750/projects/ISI_MIP/data/SSP/ esg#anl-bdm/ISIMIP/data/SSP/ -r
+isimip#vre1/gpfs_750/projects/ISI_MIP/data/global.mean/ esg#anl-bdm/ISIMIP/data/global.mean/ -r
+isimip#vre1/gpfs_750/projects/ISI_MIP/data/monthly.mean/ esg#anl-bdm/ISIMIP/data/monthly.mean/ -r
+isimip#vre1/gpfs_750/projects/ISI_MIP/data/upload_area/ esg#anl-bdm/ISIMIP/data/upload_area/ -r

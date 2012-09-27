@@ -13,6 +13,7 @@ library( chron)
    model <- unlist( str_split( Sys.getenv(    "model"), " "))
 scenario <- unlist( str_split( Sys.getenv( "scenario"), " "))
 qsubArgs <- unlist( Sys.getenv( "qsubArgs"))
+wthChunks <- unlist( Sys.getenv( "wthChunks"))
 
 maxWallTime <-
   str_match( qsubArgs,
@@ -30,7 +31,7 @@ stdOutFiles <-
   list.files(
     path= with( df,
       mapply( paste, "wth", model, scenario, sep= "/")),
-    patt= "^nc_wth_gen\\.[1-5]\\.100\\.[0-9]{1,3}\\.out$",
+    patt= sprintf( "^nc_wth_gen\\.[1-5]\\.%s\\.[0-9]{1,3}\\.out$", wthChunks),
     full.names= TRUE)
 
 parseNcWthGenOut <-

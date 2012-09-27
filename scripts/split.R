@@ -1,10 +1,10 @@
 
 library( stringr)
 
-Sys.setenv(
-  model= "HadGEM2-ES",
-  scenario= "rcp2p6 rcp4p5 rcp6p0 rcp8p5",
-  qsubArgsCdo= "-N cdo -l walltime=00:30:00")
+## Sys.setenv(
+##   model= "GFDL-ESM2M",
+##   scenario= "rcp2p6 rcp4p5 rcp6p0 rcp8p5",
+##   qsubArgsCdo= "-N cdo -l walltime=00:30:00")
 
 model <-
   unlist( str_split( Sys.getenv(    "model"), " "))
@@ -13,14 +13,14 @@ scenario <-
 qsubArgsCdo <-
   unlist( Sys.getenv( "qsubArgsCdo"))
 
-## zipFiles <- unlist( str_split( Sys.getenv( "zipFiles"), " "))
+zipFiles <- unlist( str_split( Sys.getenv( "zipFiles"), " "))
 
-zipFiles <-
-  list.files(
-    sprintf( "nc/%s", model),
-    pattern= "zip$",
-    full.names= TRUE,
-    recursive= TRUE)
+## zipFiles <-
+##   list.files(
+##     sprintf( "nc/%s", model),
+##     pattern= "zip$",
+##     full.names= TRUE,
+##     recursive= TRUE)
 
 wthVars <-
   c(
@@ -132,7 +132,7 @@ histDf <-
     model= model,
     scenario= scenario,
     wthVar= wthVars,
-    year= 1950:2004)
+    year= 1950:2005)
 
 histRecipes <-
   function( dir, model, scenario, wthVar, year,
