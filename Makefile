@@ -7,7 +7,7 @@
 # export WGETRC := $(CURDIR)/wgetrc 
 
 # export model = HadGEM2-ES IPSL-CM5A-LR MIROC-ESM-CHEM GFDL-ESM2M NorESM1-M
-export model = NorESM1-M
+export model = GFDL-ESM2M NorESM1-M
 export scenario = rcp2p6 rcp4p5 rcp6p0 rcp8p5
 export scratchDir = wth
 export wthChunks = 8
@@ -67,7 +67,7 @@ histLinks: $(historicalLinks)
 
 finalLinks: $(finalYearLinks)
 
-links: $(historicalLinks) $(finalYearLinks)
+links: histLinks finalLinks
 
 
 clean:
@@ -97,7 +97,7 @@ missingLogFiles = \
         $(wildcard wth/$(m)/$(s)/nc_wth_gen.*.out))), \
     $(wthLogFiles))
 
-wth: links $(missingLogFiles)
+wth: $(missingLogFiles)
 #	rsync -a $(scratchDir) .
 
 wth_grid.txt: # wth_gen
