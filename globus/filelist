@@ -8,3 +8,5 @@ isimip#vre1/gpfs_750/projects/ISI_MIP/data/RCP_CO2_Data/ esg#anl-bdm/ISIMIP/data
 isimip#vre1/gpfs_750/projects/ISI_MIP/data/SSP/ esg#anl-bdm/ISIMIP/data/SSP/ -r
 isimip#vre1/gpfs_750/projects/ISI_MIP/data/global.mean/ esg#anl-bdm/ISIMIP/data/global.mean/ -r
 isimip#vre1/gpfs_750/projects/ISI_MIP/data/monthly.mean/ esg#anl-bdm/ISIMIP/data/monthly.mean/ -r
+isimip#vre1/gpfs_750/projects/ISI_MIP/data/WATCH/  esg#anl-bdm/ISIMIP/data/WATCH/ -r
+isimip#vre1/gpfs_750/projects/ISI_MIP/data/WFDEI/  esg#anl-bdm/ISIMIP/data/WFDEI/ -r
